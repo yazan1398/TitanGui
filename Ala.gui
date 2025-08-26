@@ -1,0 +1,124 @@
+--// LocalScript داخل StarterPlayerScripts
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+--// GUI إنشاء
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "PlayerToolsGui"
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+--// زر فتح وغلق GUI
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 120, 0, 40)
+ToggleButton.Position = UDim2.new(0, 10, 0, 10)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Text = "فتح برمجها"
+ToggleButton.Parent = ScreenGui
+
+--// الإطار الرئيسي قابل للسحب
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 300, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 50, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
+MainFrame.Visible = false
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+--// عنوان برمجها
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(0, 255, 0)
+Title.Text = "برمجها"
+Title.Font = Enum.Font.SourceSansBold
+Title.TextScaled = true
+Title.Parent = MainFrame
+
+--// قائمة اللاعبين داخل Frame يمكن تحريكها
+local PlayerListFrame = Instance.new("Frame")
+PlayerListFrame.Size = UDim2.new(1, -10, 0.65, -10)
+PlayerListFrame.Position = UDim2.new(0, 5, 0, 45)
+PlayerListFrame.BackgroundColor3 = Color3.fromRGB(35, 70, 35)
+PlayerListFrame.Parent = MainFrame
+PlayerListFrame.Active = true
+PlayerListFrame.Draggable = true -- الآن يمكنك سحب القائمة نفسها
+
+local PlayerList = Instance.new("ScrollingFrame")
+PlayerList.Size = UDim2.new(1, 0, 1, 0)
+PlayerList.Position = UDim2.new(0, 0, 0, 0)
+PlayerList.CanvasSize = UDim2.new(0, 0, 1, 0)
+PlayerList.ScrollBarThickness = 6
+PlayerList.BackgroundTransparency = 1
+PlayerList.Parent = PlayerListFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = PlayerList
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 5)
+
+--// زر السرعة
+local SpeedBox = Instance.new("TextBox")
+SpeedBox.PlaceholderText = "أدخل السرعة"
+SpeedBox.Size = UDim2.new(0.6, 0, 0.1, 0)
+SpeedBox.Position = UDim2.new(0.05, 0, 0.75, 0)
+SpeedBox.Text = ""
+SpeedBox.ClearTextOnFocus = false
+SpeedBox.BackgroundColor3 = Color3.fromRGB(40, 100, 40)
+SpeedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedBox.Parent = MainFrame
+
+local SpeedButton = Instance.new("TextButton")
+SpeedButton.Size = UDim2.new(0.3, 0, 0.1, 0)
+SpeedButton.Position = UDim2.new(0.65, 0, 0.75, 0)
+SpeedButton.Text = "تطبيق السرعة"
+SpeedButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+SpeedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedButton.Parent = MainFrame
+
+--// فتح وغلق GUI
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+    if MainFrame.Visible then
+        ToggleButton.Text = "إغلاق برمجها"
+    else
+        ToggleButton.Text = "فتح برمجها"
+    end
+end)
+
+--// تحديث قائمة اللاعبين
+local function UpdatePlayers()
+    PlayerList:ClearAllChildren()
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, -10, 0, 30)
+            btn.BackgroundColor3 = Color3.fromRGB(50, 100, 50)
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.Text = plr.Name
+            btn.Parent = PlayerList
+
+            btn.MouseButton1Click:Connect(function()
+                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+                end
+            end)
+        end
+    end
+end
+
+Players.PlayerAdded:Connect(UpdatePlayers)
+Players.PlayerRemoving:Connect(UpdatePlayers)
+UpdatePlayers()
+
+--// تطبيق السرعة
+SpeedButton.MouseButton1Click:Connect(function()
+    local speed = tonumber(SpeedBox.Text)
+    if speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = speed
+    end
+end)
