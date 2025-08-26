@@ -1,0 +1,90 @@
+-- LocalScript للهاتف
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- إنشاء ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PlayerListGUI"
+screenGui.Parent = playerGui
+
+-- زر الفتح/الإغلاق
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0,120,0,40)
+toggleButton.Position = UDim2.new(0,10,0,10)
+toggleButton.Text = "قائمة اللاعبين"
+toggleButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
+toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
+toggleButton.Parent = screenGui
+
+-- الإطار الرئيسي للقائمة
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,250,0,350)
+frame.Position = UDim2.new(0,10,0,60)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Visible = false
+frame.Parent = screenGui
+
+-- Scrollable Frame
+local scrolling = Instance.new("ScrollingFrame")
+scrolling.Size = UDim2.new(1,0,1,0)
+scrolling.BackgroundTransparency = 1
+scrolling.CanvasSize = UDim2.new(0,0,0,0) -- سيتم تحديثه تلقائيًا
+scrolling.ScrollBarThickness = 10
+scrolling.Parent = frame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = scrolling
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0,5)
+
+-- دالة تحديث اللاعبين
+local function updateList()
+    scrolling:ClearAllChildren()
+
+    for _, p in pairs(Players:GetPlayers()) do
+        -- اسم اللاعب
+        local nameLabel = Instance.new("TextButton")
+        nameLabel.Size = UDim2.new(1,-10,0,30)
+        nameLabel.Text = p.Name
+        nameLabel.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        nameLabel.TextColor3 = Color3.fromRGB(255,255,255)
+        nameLabel.Font = Enum.Font.SourceSansBold
+        nameLabel.TextSize = 20
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        nameLabel.Parent = scrolling
+
+        -- عند الضغط على الاسم، تنتقل للاعب
+        nameLabel.MouseButton1Click:Connect(function()
+            if p.Character and player.Character then
+                local root = player.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    root.CFrame = p.Character.PrimaryPart.CFrame + Vector3.new(0,5,0)
+                end
+            end
+        end)
+
+        -- خط تحت الاسم
+        local line = Instance.new("TextLabel")
+        line.Size = UDim2.new(1,-10,0,10)
+        line.Text = "--------"
+        line.BackgroundTransparency = 1
+        line.TextColor3 = Color3.fromRGB(200,200,200)
+        line.Font = Enum.Font.SourceSans
+        line.TextSize = 20
+        line.TextXAlignment = Enum.TextXAlignment.Left
+        line.Parent = scrolling
+    end
+
+    -- تحديث CanvasSize حسب عدد العناصر
+    scrolling.CanvasSize = UDim2.new(0,0,0,UIListLayout.AbsoluteContentSize.Y + 10)
+end
+
+Players.PlayerAdded:Connect(updateList)
+Players.PlayerRemoving:Connect(updateList)
+updateList()
+
+-- زر الفتح/الإغلاق
+toggleButton.MouseButton1Click:Connect(function()
+    frame.Visible = not frame.Visible
+end)
