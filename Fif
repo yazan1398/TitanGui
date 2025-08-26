@@ -1,0 +1,153 @@
+-- LocalScript للهاتف/كمبيوتر
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PlayerListGUI"
+screenGui.Parent = playerGui
+
+-- زر الفتح/الإغلاق الرئيسي
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0,150,0,40)
+toggleButton.Position = UDim2.new(0,10,0,10)
+toggleButton.Text = "قائمة اللاعبين"
+toggleButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
+toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
+toggleButton.Parent = screenGui
+
+-- الإطار الرئيسي للقائمة
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,250,0,350)
+frame.Position = UDim2.new(0,10,0,60)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Visible = false
+frame.Parent = screenGui
+
+-- جعل الـFrame قابل للسحب
+local dragging = false
+local dragInput, mousePos, framePos
+
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        mousePos = input.Position
+        framePos = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - mousePos
+        frame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X,
+                                   framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+    end
+end)
+
+-- زر الإغلاق الداخلي
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0,50,0,30)
+closeButton.Position = UDim2.new(1,-60,0,10)
+closeButton.Text = "X"
+closeButton.BackgroundColor3 = Color3.fromRGB(200,50,50)
+closeButton.TextColor3 = Color3.fromRGB(255,255,255)
+closeButton.Parent = frame
+
+closeButton.MouseButton1Click:Connect(function()
+    frame.Visible = false
+end)
+
+-- Scrollable Frame
+local scrolling = Instance.new("ScrollingFrame")
+scrolling.Size = UDim2.new(1,0,1,0)
+scrolling.Position = UDim2.new(0,0,0,50)
+scrolling.BackgroundTransparency = 1
+scrolling.ScrollBarThickness = 10
+scrolling.Parent = frame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = scrolling
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0,5)
+
+-- جدول لتخزين أزرار اللاعبين
+local playerButtons = {}
+
+-- دالة لإنشاء زر لاعب
+local function createPlayerButton(p)
+    if playerButtons[p] then return end
+    local nameLabel = Instance.new("TextButton")
+    nameLabel.Size = UDim2.new(1,-10,0,30)
+    nameLabel.Text = p.Name
+    nameLabel.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    nameLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    nameLabel.Font = Enum.Font.SourceSansBold
+    nameLabel.TextSize = 20
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Parent = scrolling
+
+    -- تأثير Highlight عند لمس الاسم
+    nameLabel.MouseEnter:Connect(function()
+        nameLabel.BackgroundColor3 = Color3.fromRGB(100,100,100)
+    end)
+    nameLabel.MouseLeave:Connect(function()
+        nameLabel.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    end)
+
+    -- الانتقال للاعب عند الضغط على اسمه (إلى منتصف جسمه)
+    nameLabel.MouseButton1Click:Connect(function()
+        if p.Character and player.Character then
+            local root = player.Character:FindFirstChild("HumanoidRootPart")
+            local targetRoot = p.Character:FindFirstChild("HumanoidRootPart")
+            if root and targetRoot then
+                root.CFrame = CFrame.new(targetRoot.Position)
+            end
+        end
+    end)
+
+    -- لون متدرج حسب عدد اللاعبين
+    local index = #scrolling:GetChildren()
+    nameLabel.BackgroundColor3 = Color3.fromHSV((index*0.05)%1,0.5,0.5)
+
+    playerButtons[p] = nameLabel
+
+    -- تحديث CanvasSize
+    scrolling.CanvasSize = UDim2.new(0,0,0,UIListLayout.AbsoluteContentSize.Y + 10)
+end
+
+-- دالة حذف لاعب عند خروجه
+local function removePlayerButton(p)
+    if playerButtons[p] then
+        playerButtons[p]:Destroy()
+        playerButtons[p] = nil
+        scrolling.CanvasSize = UDim2.new(0,0,0,UIListLayout.AbsoluteContentSize.Y + 10)
+    end
+end
+
+-- إنشاء أزرار لكل اللاعبين الحاليين
+for _, p in pairs(Players:GetPlayers()) do
+    createPlayerButton(p)
+end
+
+-- التحديث عند دخول لاعب جديد
+Players.PlayerAdded:Connect(createPlayerButton)
+
+-- التحديث عند خروج لاعب
+Players.PlayerRemoving:Connect(removePlayerButton)
+
+-- زر فتح/إغلاق القائمة
+toggleButton.MouseButton1Click:Connect(function()
+    frame.Visible = not frame.Visible
+end)
