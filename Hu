@@ -1,0 +1,95 @@
+-- LocalScript داخل الـScreenGui
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local gui = script.Parent
+local playerListFrame = gui:WaitForChild("PlayerList")
+local teleportButton = gui:WaitForChild("TeleportButton")
+local speedTextBox = gui:WaitForChild("SpeedTextBox")
+local speedButton = gui:WaitForChild("SpeedButton")
+local toggleButton = gui:WaitForChild("ToggleButton") -- زر الإظهار والإخفاء
+
+-- تحديث قائمة اللاعبين
+local function updatePlayerList()
+    playerListFrame:ClearAllChildren()
+    for i, plr in pairs(Players:GetPlayers()) do
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Size = UDim2.new(1, 0, 0, 30)
+        nameLabel.Position = UDim2.new(0,0,0,30*(i-1)) -- ترتيب الاسماء من فوق لتحت
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.TextColor3 = Color3.fromRGB(0,255,0)
+        nameLabel.Text = plr.Name
+        nameLabel.TextScaled = true
+        nameLabel.Parent = playerListFrame
+    end
+end
+
+updatePlayerList()
+
+Players.PlayerAdded:Connect(function(plr)
+    updatePlayerList()
+    plr.CharacterAdded:Connect(updatePlayerList)
+end)
+
+Players.PlayerRemoving:Connect(updatePlayerList)
+
+-- زر الانتقال
+teleportButton.MouseButton1Click:Connect(function()
+    local targetName = speedTextBox.Text
+    local targetPlayer = Players:FindFirstChild(targetName)
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character:SetPrimaryPartCFrame(targetPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0))
+    else
+        warn("لا يمكن الانتقال: اللاعب غير موجود أو شخصيته لم تحمل بعد")
+    end
+end)
+
+-- زر تعديل السرعة
+local function setSpeed()
+    local speed = tonumber(speedTextBox.Text)
+    if speed and player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid.WalkSpeed = speed
+    else
+        warn("ادخل قيمة رقمية صحيحة للسرعة")
+    end
+end
+
+speedButton.MouseButton1Click:Connect(setSpeed)
+speedTextBox.FocusLost:Connect(setSpeed)
+
+-- زر إظهار/إخفاء الـGUI
+local guiVisible = true
+toggleButton.MouseButton1Click:Connect(function()
+    guiVisible = not guiVisible
+    gui.Visible = guiVisible
+end)
+
+-- واجهة قابلة للسحب
+local dragToggle = false
+local dragInput, mousePos, framePos
+gui.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragToggle = true
+        mousePos = input.Position
+        framePos = gui.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragToggle = false
+            end
+        end)
+    end
+end)
+
+gui.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if dragToggle and input == dragInput then
+        local delta = input.Position - mousePos
+        gui.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X,
+                                framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+    end
+end)
