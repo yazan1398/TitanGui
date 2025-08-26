@@ -1,4 +1,4 @@
--- LocalScript للطيران والسرعة والانتقال مع زر اختيار سرعة
+-- LocalScript للطيران، السرعة، والانتقال للبطن مع GUI صغيرة
 local player = game.Players.LocalPlayer
 local uis = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
@@ -13,27 +13,40 @@ local bodyVelocity
 local screenGui = Instance.new("ScreenGui", player.PlayerGui)
 screenGui.Name = "FlyGui"
 
+-- زر فتح/إغلاق GUI
+local toggleBtn = Instance.new("TextButton", screenGui)
+toggleBtn.Size = UDim2.new(0, 80, 0, 40)
+toggleBtn.Position = UDim2.new(0, 20, 0, 20)
+toggleBtn.Text = "GUI"
+toggleBtn.TextScaled = true
+toggleBtn.BackgroundColor3 = Color3.fromRGB(0,150,0)
+
 local frame = Instance.new("Frame", screenGui)
-frame.Size = UDim2.new(0, 300, 0, 450)
-frame.Position = UDim2.new(0.5, -150, 0.5, -225)
+frame.Size = UDim2.new(0, 220, 0, 300)
+frame.Position = UDim2.new(0.5, -110, 0.5, -150)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.Active = true
 frame.Draggable = true
+frame.Visible = false
+
+toggleBtn.MouseButton1Click:Connect(function()
+    frame.Visible = not frame.Visible
+end)
 
 -- زر إغلاق
 local closeBtn = Instance.new("TextButton", frame)
-closeBtn.Size = UDim2.new(0, 50, 0, 50)
-closeBtn.Position = UDim2.new(1, -55, 0, 5)
+closeBtn.Size = UDim2.new(0, 40, 0, 40)
+closeBtn.Position = UDim2.new(1, -45, 0, 5)
 closeBtn.Text = "X"
 closeBtn.TextScaled = true
 closeBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
 closeBtn.MouseButton1Click:Connect(function()
-    screenGui.Enabled = false
+    frame.Visible = false
 end)
 
 -- زر الطيران
 local flyBtn = Instance.new("TextButton", frame)
-flyBtn.Size = UDim2.new(0, 280, 0, 50)
+flyBtn.Size = UDim2.new(0, 200, 0, 40)
 flyBtn.Position = UDim2.new(0, 10, 0, 10)
 flyBtn.Text = "Fly: OFF"
 flyBtn.TextScaled = true
@@ -42,46 +55,24 @@ flyBtn.MouseButton1Click:Connect(function()
     flyBtn.Text = flying and "Fly: ON" or "Fly: OFF"
 end)
 
--- زر اختيار سرعة اللاعب
-local speedBtn = Instance.new("TextButton", frame)
-speedBtn.Size = UDim2.new(0, 280, 0, 50)
-speedBtn.Position = UDim2.new(0, 10, 0, 70)
-speedBtn.Text = "Speed: 16"
-speedBtn.TextScaled = true
-
--- قائمة أزرار السرعة
-local speedOptions = {16, 25, 50, 100}
-local speedFrame = Instance.new("Frame", frame)
-speedFrame.Size = UDim2.new(0, 280, 0, #speedOptions*50)
-speedFrame.Position = UDim2.new(0, 10, 0, 130)
-speedFrame.BackgroundTransparency = 1
-speedFrame.Visible = false
-
-for i, spd in ipairs(speedOptions) do
-    local btn = Instance.new("TextButton", speedFrame)
-    btn.Size = UDim2.new(1,0,0,50)
-    btn.Position = UDim2.new(0,0,(i-1)/#speedOptions,0)
-    btn.Text = tostring(spd)
-    btn.TextScaled = true
-    btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
-    btn.MouseButton1Click:Connect(function()
-        walkSpeed = spd
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid.WalkSpeed = walkSpeed
-        end
-        speedBtn.Text = "Speed: "..spd
-        speedFrame.Visible = false
-    end)
-end
-
-speedBtn.MouseButton1Click:Connect(function()
-    speedFrame.Visible = not speedFrame.Visible
+-- تعديل سرعة اللاعب (TextBox)
+local speedBox = Instance.new("TextBox", frame)
+speedBox.Size = UDim2.new(0, 200, 0, 40)
+speedBox.Position = UDim2.new(0, 10, 0, 60)
+speedBox.PlaceholderText = "اكتب السرعة هنا"
+speedBox.TextScaled = true
+speedBox.FocusLost:Connect(function()
+    local val = tonumber(speedBox.Text)
+    if val and player.Character and player.Character:FindFirstChild("Humanoid") then
+        walkSpeed = val
+        player.Character.Humanoid.WalkSpeed = walkSpeed
+    end
 end)
 
--- قائمة اللاعبين للاختيار
+-- قائمة اللاعبين
 local playerList = Instance.new("ScrollingFrame", frame)
-playerList.Size = UDim2.new(0, 280, 0, 150)
-playerList.Position = UDim2.new(0, 10, 0, 190)
+playerList.Size = UDim2.new(0, 200, 0, 180)
+playerList.Position = UDim2.new(0, 10, 0, 110)
 playerList.BackgroundColor3 = Color3.fromRGB(30,30,30)
 playerList.CanvasSize = UDim2.new(0,0,0,0)
 
@@ -97,11 +88,12 @@ local function updatePlayers()
             btn.Size = UDim2.new(1,0,0,40)
             btn.Text = p.Name
             btn.TextScaled = true
-            btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+            btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
             btn.MouseButton1Click:Connect(function()
                 if player.Character and player.Character:FindFirstChild("HumanoidRootPart") 
                 and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    player.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+                    -- الانتقال للبطن مع Offset صغير
+                    player.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0, -1, 0)
                 end
             end)
         end
