@@ -1,0 +1,48 @@
+-- إنشاء واجهة GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GlobalMessageGUI"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local messageLabel = Instance.new("TextLabel")
+messageLabel.Size = UDim2.new(0, 400, 0, 50)
+messageLabel.Position = UDim2.new(0.5, -200, 0.1, 0)
+messageLabel.Text = ""
+messageLabel.TextScaled = true
+messageLabel.BackgroundTransparency = 0.5
+messageLabel.BackgroundColor3 = Color3.fromRGB(0,0,0)
+messageLabel.TextColor3 = Color3.fromRGB(255,255,255)
+messageLabel.Parent = screenGui
+
+-- متغير لتخزين آخر رسالة
+local lastMessage = ""
+
+local function showMessage(message)
+    lastMessage = message -- تحديث آخر رسالة
+    for _, player in pairs(game.Players:GetPlayers()) do
+        local playerGui = player:WaitForChild("PlayerGui")
+        local labelClone = messageLabel:Clone()
+        labelClone.Text = message
+        labelClone.Parent = playerGui
+        task.delay(20, function()
+            labelClone:Destroy()
+        end)
+    end
+end
+
+-- عرض آخر رسالة لأي لاعب جديد ينضم
+game.Players.PlayerAdded:Connect(function(player)
+    player.Chatted:Connect(function(msg)
+        showMessage(msg)
+    end)
+
+    -- عرض آخر رسالة موجودة حالياً عند الانضمام
+    if lastMessage ~= "" then
+        local playerGui = player:WaitForChild("PlayerGui")
+        local labelClone = messageLabel:Clone()
+        labelClone.Text = lastMessage
+        labelClone.Parent = playerGui
+        task.delay(20, function()
+            labelClone:Destroy()
+        end)
+    end
+end)
