@@ -1,0 +1,117 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- GUI الرئيسي
+local gui = playerGui:WaitForChild("MainGUI")
+local playerListFrame = gui:WaitForChild("PlayerList")
+local teleportButton = gui:WaitForChild("TeleportButton")
+local speedTextBox = gui:WaitForChild("SpeedTextBox")
+local speedButton = gui:WaitForChild("SpeedButton")
+local closeButton = gui:WaitForChild("CloseButton")
+
+-- زر فتح GUI خارج الـGUI الرئيسي
+local openButton = playerGui:WaitForChild("OpenGUIButton")
+
+gui.Visible = false -- يبدأ مقفل
+
+-- زر فتح GUI
+openButton.MouseButton1Click:Connect(function()
+    gui.Visible = true
+end)
+
+-- زر إغلاق GUI
+closeButton.MouseButton1Click:Connect(function()
+    gui.Visible = false
+end)
+
+-- تحديث قائمة اللاعبين
+local function updatePlayerList()
+    playerListFrame:ClearAllChildren()
+    for i, plr in pairs(Players:GetPlayers()) do
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Size = UDim2.new(1, 0, 0, 30)
+        nameLabel.Position = UDim2.new(0,0,0,30*(i-1))
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.TextColor3 = Color3.fromRGB(0,255,0)
+        nameLabel.Text = plr.Name
+        nameLabel.TextScaled = true
+        nameLabel.Parent = playerListFrame
+    end
+end
+
+updatePlayerList()
+
+-- كل ما لاعب ينضم أو شخصيته تتحمل
+Players.PlayerAdded:Connect(function(plr)
+    updatePlayerList()
+    plr.CharacterAdded:Connect(updatePlayerList)
+end)
+
+Players.PlayerRemoving:Connect(updatePlayerList)
+
+-- زر الانتقال
+teleportButton.MouseButton1Click:Connect(function()
+    local targetName = speedTextBox.Text
+    local targetPlayer = Players:FindFirstChild(targetName)
+    if targetPlayer then
+        local character = targetPlayer.Character
+        if character then
+            local hrp = character:WaitForChild("HumanoidRootPart",5)
+            if hrp then
+                player.Character:SetPrimaryPartCFrame(hrp.CFrame + Vector3.new(0,3,0))
+            else
+                warn("HumanoidRootPart لم يتحمل بعد")
+            end
+        end
+    else
+        warn("اللاعب غير موجود")
+    end
+end)
+
+-- زر تعديل السرعة
+local function setSpeed()
+    local speed = tonumber(speedTextBox.Text)
+    local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+    if speed and humanoid then
+        humanoid.WalkSpeed = speed
+    else
+        warn("ادخل قيمة رقمية صحيحة للسرعة")
+    end
+end
+
+speedButton.MouseButton1Click:Connect(setSpeed)
+speedTextBox.FocusLost:Connect(setSpeed)
+
+-- واجهة قابلة للسحب
+local dragToggle = false
+local dragInput, mousePos, framePos
+
+gui.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragToggle = true
+        mousePos = input.Position
+        framePos = gui.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragToggle = false
+            end
+        end)
+    end
+end)
+
+gui.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragToggle and input == dragInput then
+        local delta = input.Position - mousePos
+        gui.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X,
+                                framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+    end
+end)
