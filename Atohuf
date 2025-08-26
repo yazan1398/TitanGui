@@ -1,0 +1,69 @@
+-- LocalScript للهاتف
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PlayerListGUI"
+screenGui.Parent = playerGui
+
+-- زر الفتح/الإغلاق
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0,120,0,40)
+toggleButton.Position = UDim2.new(0,10,0,10)
+toggleButton.Text = "قائمة اللاعبين"
+toggleButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
+toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
+toggleButton.Parent = screenGui
+
+-- الإطار الرئيسي للقائمة
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,200,0,300)
+frame.Position = UDim2.new(0,10,0,60)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Visible = false
+frame.Parent = screenGui
+
+-- Scrollable Frame
+local scrolling = Instance.new("ScrollingFrame")
+scrolling.Size = UDim2.new(1,0,1,0)
+scrolling.BackgroundTransparency = 1
+scrolling.ScrollBarThickness = 10
+scrolling.Parent = frame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = scrolling
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0,5)
+
+-- دالة إنشاء قائمة اللاعبين
+local function createPlayerList()
+    scrolling:ClearAllChildren()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= player then
+            local nameLabel = Instance.new("TextLabel")
+            nameLabel.Size = UDim2.new(1,-10,0,30)
+            nameLabel.Text = p.Name
+            nameLabel.BackgroundTransparency = 1
+            nameLabel.TextColor3 = Color3.fromRGB(255,255,255)
+            nameLabel.Font = Enum.Font.SourceSansBold
+            nameLabel.TextSize = 20
+            nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            nameLabel.Parent = scrolling
+        end
+    end
+    scrolling.CanvasSize = UDim2.new(0,0,0,UIListLayout.AbsoluteContentSize.Y + 10)
+end
+
+-- تحديث عند دخول أو خروج لاعب
+Players.PlayerAdded:Connect(createPlayerList)
+Players.PlayerRemoving:Connect(createPlayerList)
+
+-- إنشاء القائمة أول مرة
+createPlayerList()
+
+-- زر فتح/إغلاق
+toggleButton.MouseButton1Click:Connect(function()
+    frame.Visible = not frame.Visible
+end)
