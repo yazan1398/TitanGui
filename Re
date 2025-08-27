@@ -1,0 +1,88 @@
+-- EnhancedMainScriptV5.lua
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local RunService = game:GetService("RunService")
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = PlayerGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 200, 0, 300)
+Frame.Position = UDim2.new(0, 100, 0, 100)
+Frame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+Frame.Parent = ScreenGui
+Frame.Active = true
+Frame.Draggable = true
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = Frame
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- دالة الهجوم
+local function attackWithTool(targetPlayer)
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local target = targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not target then return end
+
+    -- Tool ممسوك؟
+    local tool = char:FindFirstChildOfClass("Tool")
+    if not tool then
+        warn("لا يوجد Tool ممسك حالياً!")
+        return
+    end
+
+    -- حركة أبطأ لحد الخصم
+    local duration = 4
+    local steps = 100
+    local startPos = char.HumanoidRootPart.Position
+    local endPos = target.Position
+    for i = 1, steps do
+        local alpha = i / steps
+        char.HumanoidRootPart.CFrame = CFrame.new(startPos:Lerp(endPos, alpha))
+        RunService.RenderStepped:Wait()
+    end
+
+    -- يوصل ويبقى عند الخصم (ما يرجع أبداً)
+    char.HumanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0,2,0))
+
+    -- أول ما يوصل → ضربة تلقائي
+    local humanoid = targetPlayer.Character:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid.Health = humanoid.Health - 900
+        wait(0.5)
+
+        -- استمرار ضرب تلقائي كل شوي
+        while humanoid.Health > 0 do
+            humanoid.Health = humanoid.Health - 900
+            wait(1)
+        end
+    end
+end
+
+-- زر لكل لاعب
+local function refreshPlayers()
+    for _, child in pairs(Frame:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local Button = Instance.new("TextButton")
+            Button.Size = UDim2.new(1,0,0,30)
+            Button.Text = player.Name
+            Button.Parent = Frame
+
+            Button.MouseButton1Click:Connect(function()
+                attackWithTool(player)
+            end)
+        end
+    end
+end
+
+refreshPlayers()
+Players.PlayerAdded:Connect(refreshPlayers)
+Players.PlayerRemoving:Connect(refreshPlayers)
