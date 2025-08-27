@@ -1,0 +1,101 @@
+-- AboudGUI_AutoHit_NoDamage.lua
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+-- إنشاء ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = PlayerGui
+
+-- زر فتح/إغلاق
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 150, 0, 30)
+ToggleButton.Position = UDim2.new(0, 20, 0, 20)
+ToggleButton.Text = "مخصص عبود"
+ToggleButton.Parent = ScreenGui
+
+-- الفريم الرئيسي
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 200, 0, 300)
+Frame.Position = UDim2.new(0, 20, 0, 60)
+Frame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+Frame.Parent = ScreenGui
+Frame.Active = true
+Frame.Draggable = true
+Frame.Visible = false
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = Frame
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- فتح/اغلاق الفريم
+ToggleButton.MouseButton1Click:Connect(function()
+    Frame.Visible = not Frame.Visible
+end)
+
+-- متابعة وضرب تلقائي بدون ضرر
+local function followAndHit(targetPlayer)
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local targetChar = targetPlayer.Character
+    if not targetChar or not targetChar:FindFirstChild("HumanoidRootPart") then return end
+
+    -- البحث عن أي شيء في يد اللاعب
+    local heldItem = nil
+    for _, child in pairs(char:GetChildren()) do
+        if child:IsA("Tool") or child:IsA("Part") then
+            heldItem = child
+            break
+        end
+    end
+    if not heldItem then
+        warn("لا يوجد شيء ممسك حالياً!")
+        return
+    end
+
+    -- متابعة الخصم بدون تعليق
+    local conn
+    conn = RunService.RenderStepped:Connect(function()
+        if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            conn:Disconnect()
+            return
+        end
+        char.HumanoidRootPart.CFrame = CFrame.new(targetChar.HumanoidRootPart.Position + Vector3.new(0,2,0))
+    end)
+
+    -- أول ما يوصل → ضرب تلقائي (بدون ضرر)
+    spawn(function()
+        while heldItem.Parent and targetChar.Parent do
+            -- هنا مجرد محاكاة كبس الشاشة (بدون تعديل صحة الخصم)
+            -- مثلاً يمكن عمل تأثير ضرب أو صوت لو تحب
+            wait(0.7)
+        end
+        conn:Disconnect()
+    end)
+end
+
+-- تحديث قائمة اللاعبين
+local function refreshPlayers()
+    for _, child in pairs(Frame:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local Button = Instance.new("TextButton")
+            Button.Size = UDim2.new(1,0,0,30)
+            Button.Text = player.Name
+            Button.Parent = Frame
+
+            Button.MouseButton1Click:Connect(function()
+                followAndHit(player)
+            end)
+        end
+    end
+end
+
+refreshPlayers()
+Players.PlayerAdded:Connect(refreshPlayers)
+Players.PlayerRemoving:Connect(refreshPlayers)
