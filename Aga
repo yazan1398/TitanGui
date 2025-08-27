@@ -1,0 +1,72 @@
+-- EnhancedMainScript.lua
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local RunService = game:GetService("RunService")
+
+-- إنشاء ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = PlayerGui
+
+-- إنشاء الفريم القابل للتحريك
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 200, 0, 300)
+Frame.Position = UDim2.new(0, 100, 0, 100)
+Frame.BackgroundColor3 = Color3.fromRGB(50,50,50)
+Frame.Parent = ScreenGui
+Frame.Active = true
+Frame.Draggable = true
+
+-- إنشاء قائمة أسماء اللاعبين
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = Frame
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- دالة الهجوم بالـ Tool الذي تمسكه أنت
+local function attackWithTool(targetPlayer)
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local target = targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not target then return end
+
+    -- البحث عن أي Tool تمسكه اللاعب حاليًا
+    local tool = char:FindFirstChildOfClass("Tool")
+    if not tool then
+        warn("لا يوجد Tool ممسك حالياً!")
+        return
+    end
+
+    -- حركة سلسة ومتوسطة السرعة تجاه الهدف مع اختراق الجدران
+    local duration = 2 -- مدة الحركة بالثواني
+    local steps = 60
+    local startPos = char.HumanoidRootPart.Position
+    local endPos = target.Position
+    for i = 1, steps do
+        local alpha = i / steps
+        char.HumanoidRootPart.CFrame = CFrame.new(startPos:Lerp(endPos, alpha))
+        RunService.RenderStepped:Wait()
+    end
+
+    -- ضرب اللاعب بالـ Tool كما لو تكبس على الشاشة
+    local humanoid = targetPlayer.Character:FindFirstChild("Humanoid")
+    if humanoid then
+        for i = 1, 5 do
+            humanoid.Health = humanoid.Health - 900
+            wait(0.3) -- هدوء بين الضربات
+        end
+    end
+end
+
+-- إضافة اللاعبين للقائمة
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        local Button = Instance.new("TextButton")
+        Button.Size = UDim2.new(1,0,0,30)
+        Button.Text = player.Name
+        Button.Parent = Frame
+
+        Button.MouseButton1Click:Connect(function()
+            attackWithTool(player)
+        end)
+    end
+end
