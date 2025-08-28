@@ -1,0 +1,171 @@
+-- ========== Fly GUI V3 ==========
+local Players = game:GetService("Players")
+local speaker = Players.LocalPlayer
+local mainGui = Instance.new("ScreenGui")
+mainGui.Name = "main"
+mainGui.Parent = speaker:WaitForChild("PlayerGui")
+mainGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+mainGui.ResetOnSpawn = false
+
+local Frame = Instance.new("Frame")
+Frame.Parent = mainGui
+Frame.BackgroundColor3 = Color3.fromRGB(144,238,144) -- أخضر فاتح
+Frame.BorderColor3 = Color3.fromRGB(34,139,34) -- أخضر متوسط
+Frame.Position = UDim2.new(0.100, 0, 0.38, 0)
+Frame.Size = UDim2.new(0, 190, 0, 57)
+Frame.Active = true
+Frame.Draggable = true
+
+local TextLabel = Instance.new("TextLabel")
+TextLabel.Parent = Frame
+TextLabel.BackgroundColor3 = Color3.fromRGB(144,238,144)
+TextLabel.Position = UDim2.new(0.47, 0, 0, 0)
+TextLabel.Size = UDim2.new(0, 100, 0, 28)
+TextLabel.Font = Enum.Font.SourceSans
+TextLabel.Text = "FLY GUI V3"
+TextLabel.TextColor3 = Color3.fromRGB(0,0,0)
+TextLabel.TextScaled = true
+TextLabel.TextWrapped = true
+
+-- أزرار الطيران
+local function makeButton(name, text, pos, color)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Parent = Frame
+    btn.BackgroundColor3 = color
+    btn.Position = pos
+    btn.Size = UDim2.new(0,44,0,28)
+    btn.Font = Enum.Font.SourceSans
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(0,0,0)
+    btn.TextScaled = true
+    return btn
+end
+
+local up = makeButton("up","UP",UDim2.new(0,0,0,0),Color3.fromRGB(144,238,144))
+local down = makeButton("down","DOWN",UDim2.new(0,0,0.49,0),Color3.fromRGB(60,179,113))
+local onof = makeButton("onof","fly",UDim2.new(0.70,0,0.49,0),Color3.fromRGB(255,182,193))
+local plus = makeButton("plus","+","UDim2.new(0.23,0,0,0)",Color3.fromRGB(152,251,152))
+local mine = makeButton("mine","-",UDim2.new(0.23,0,0.49,0),Color3.fromRGB(152,251,152))
+
+local speed = Instance.new("TextLabel")
+speed.Name = "speed"
+speed.Parent = Frame
+speed.BackgroundColor3 = Color3.fromRGB(144,238,144)
+speed.Position = UDim2.new(0.468,0,0.491,0)
+speed.Size = UDim2.new(0,44,0,28)
+speed.Font = Enum.Font.SourceSans
+speed.Text = "1"
+speed.TextColor3 = Color3.fromRGB(0,0,0)
+speed.TextScaled = true
+speed.TextWrapped = true
+
+-- Close button
+local closebutton = Instance.new("TextButton")
+closebutton.Name = "Close"
+closebutton.Parent = Frame
+closebutton.BackgroundColor3 = Color3.fromRGB(255,99,71)
+closebutton.Font = Enum.Font.SourceSans
+closebutton.Size = UDim2.new(0,45,0,28)
+closebutton.Text = "X"
+closebutton.TextSize = 30
+closebutton.Position = UDim2.new(0,0,-1,27)
+
+-- ===============================================
+-- ========== Player List GUI ==========
+local playerListGui = Instance.new("ScreenGui")
+playerListGui.Name = "PlayerListGUI"
+playerListGui.Parent = speaker:WaitForChild("PlayerGui")
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0,150,0,40)
+toggleButton.Position = UDim2.new(0,10,0,10)
+toggleButton.Text = "قائمة اللاعبين"
+toggleButton.BackgroundColor3 = Color3.fromRGB(105,105,105) -- رمادي داكن
+toggleButton.TextColor3 = Color3.fromRGB(255,255,255)
+toggleButton.Parent = playerListGui
+
+local playerListFrame = Instance.new("Frame")
+playerListFrame.Size = UDim2.new(0,250,0,350)
+playerListFrame.Position = UDim2.new(0,10,0,60)
+playerListFrame.BackgroundColor3 = Color3.fromRGB(169,169,169) -- رمادي متوسط
+playerListFrame.Visible = false
+playerListFrame.Parent = playerListGui
+
+local closeButtonPL = Instance.new("TextButton")
+closeButtonPL.Size = UDim2.new(0,50,0,30)
+closeButtonPL.Position = UDim2.new(1,-60,0,10)
+closeButtonPL.Text = "X"
+closeButtonPL.BackgroundColor3 = Color3.fromRGB(255,99,71)
+closeButtonPL.TextColor3 = Color3.fromRGB(255,255,255)
+closeButtonPL.Parent = playerListFrame
+
+closeButtonPL.MouseButton1Click:Connect(function()
+    playerListFrame.Visible = false
+end)
+
+local scrolling = Instance.new("ScrollingFrame")
+scrolling.Size = UDim2.new(1,0,1,0)
+scrolling.Position = UDim2.new(0,0,0,50)
+scrolling.BackgroundTransparency = 1
+scrolling.ScrollBarThickness = 10
+scrolling.Parent = playerListFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = scrolling
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0,5)
+
+local playerButtons = {}
+
+local function createPlayerButton(p)
+    if playerButtons[p] then return end
+    local nameLabel = Instance.new("TextButton")
+    nameLabel.Size = UDim2.new(1,-10,0,30)
+    nameLabel.Text = p.Name
+    nameLabel.BackgroundColor3 = Color3.fromRGB(144,238,144) -- أخضر فاتح
+    nameLabel.TextColor3 = Color3.fromRGB(0,0,0)
+    nameLabel.Font = Enum.Font.SourceSansBold
+    nameLabel.TextSize = 20
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Parent = scrolling
+
+    nameLabel.MouseEnter:Connect(function()
+        nameLabel.BackgroundColor3 = Color3.fromRGB(60,179,113) -- أخضر متوسط
+    end)
+    nameLabel.MouseLeave:Connect(function()
+        nameLabel.BackgroundColor3 = Color3.fromRGB(144,238,144)
+    end)
+
+    nameLabel.MouseButton1Click:Connect(function()
+        if p.Character and speaker.Character then
+            local root = speaker.Character:FindFirstChild("HumanoidRootPart")
+            local targetRoot = p.Character:FindFirstChild("HumanoidRootPart")
+            if root and targetRoot then
+                root.CFrame = CFrame.new(targetRoot.Position)
+            end
+        end
+    end)
+
+    playerButtons[p] = nameLabel
+    scrolling.CanvasSize = UDim2.new(0,0,0,UIListLayout.AbsoluteContentSize.Y + 10)
+end
+
+local function removePlayerButton(p)
+    if playerButtons[p] then
+        playerButtons[p]:Destroy()
+        playerButtons[p] = nil
+        scrolling.CanvasSize = UDim2.new(0,0,0,UIListLayout.AbsoluteContentSize.Y + 10)
+    end
+end
+
+for _, p in pairs(Players:GetPlayers()) do
+    createPlayerButton(p)
+end
+
+Players.PlayerAdded:Connect(createPlayerButton)
+Players.PlayerRemoving:Connect(removePlayerButton)
+
+toggleButton.MouseButton1Click:Connect(function()
+    playerListFrame.Visible = not playerListFrame.Visible
+end)
